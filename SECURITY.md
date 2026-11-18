@@ -91,14 +91,18 @@ L'intercepteur Axios dans `src/api/axios.ts` assure :
 
 ---
 
-## 7. Validation des Entrées (Input Validation)
+## 7. Validation des Entrées (Input Validation) & Protection Anti-DoS
 
-### Côté Backend (Data Annotations)
-* Validation stricte des modèles via `[Required]`, `[EmailAddress]`, `[MinLength(8)]`, `[Range(1, 5)]`, et `[MaxLength]`.
-* Les données non conformes sont rejetées avec un statut HTTP `400 Bad Request` avant d'atteindre la couche logique ou la base de données.
+### Côté Backend (Data Annotations & IValidatableObject)
+* Validation stricte des modèles via `[Required]`, `[EmailAddress]`, `[MinLength(8)]`, `[RegularExpression]` (mot de passe robuste), `[Range(1, 5)]`, et `[MaxLength]`.
+* **Protection anti-débordement sur les tags d'émotions :** Implémentation de `IValidatableObject` sur `MoodEntryRequest` plafonnant le nombre de tags à 10 maximum, chaque tag étant limité à 30 caractères.
+* **Bornage temporel :** Contrôle des dates pour empêcher les dates futures ou obsolètes (> 1 an).
+* **Limitation de débit (Rate Limiting) :** Middleware natif .NET 8 `Microsoft.AspNetCore.RateLimiting` configuré sur `/api/auth/*` (politique `AuthPolicy` : 5 requêtes max par minute par IP) neutralisant les attaques par force brute et la saturation CPU de BCrypt.
+* **En-têtes de sécurité HTTP :** Injection de `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `X-XSS-Protection`, et `Referrer-Policy`.
 
 ### Côté Mobile
-* Contrôle préventif des champs vides, vérification de confirmation du mot de passe et seuils minimaux de longueur avant l'envoi de toute requête réseau.
+* Contrôle préventif des champs vides, vérification de confirmation du mot de passe avec regex de complexité, et seuils minimaux de longueur avant l'envoi de toute requête réseau.
+* Normalisation des dates locales via l'utilitaire `src/utils/date.ts` évitant les décalages de fuseau horaire (Timezone drift).
 
 ---
 

@@ -46,6 +46,22 @@ public class MoodsController : ControllerBase
         var userId = GetUserId();
         var entryDate = (request.EntryDateUtc ?? DateTime.UtcNow).Date;
 
+        // Nettoyage et normalisation des tags d'émotions
+        var cleanTags = (request.EmotionTags ?? new List<string>())
+            .Where(t => !string.IsNullOrWhiteSpace(t))
+            .Select(t => t.Trim())
+            .Distinct()
+            .Take(10)
+            .ToList();
+
+        var serializedTags = JsonSerializer.Serialize(cleanTags);
+        if (serializedTags.Length > 500)
+        {
+            return BadRequest(new { message = "La liste des émotions sélectionnées dépasse la taille autorisée." });
+        }
+
+        var cleanNote = string.IsNullOrWhiteSpace(request.Note) ? null : request.Note.Trim();
+
         // Chercher une entrée existante pour ce jour
         var existingEntry = await _context.MoodEntries
             .FirstOrDefaultAsync(m => m.UserId == userId && m.EntryDateUtc.Date == entryDate);
@@ -54,8 +70,8 @@ public class MoodsController : ControllerBase
         {
             // Mise à jour de l'entrée existante
             existingEntry.Score = request.Score;
-            existingEntry.EmotionTags = JsonSerializer.Serialize(request.EmotionTags);
-            existingEntry.Note = request.Note;
+            existingEntry.EmotionTags = serializedTags;
+            existingEntry.Note = cleanNote;
             existingEntry.UpdatedAt = DateTime.UtcNow;
         }
         else
@@ -64,8 +80,8 @@ public class MoodsController : ControllerBase
             existingEntry = new MoodEntry
             {
                 Score = request.Score,
-                EmotionTags = JsonSerializer.Serialize(request.EmotionTags),
-                Note = request.Note,
+                EmotionTags = serializedTags,
+                Note = cleanNote,
                 EntryDateUtc = entryDate,
                 UserId = userId,
                 CreatedAt = DateTime.UtcNow,

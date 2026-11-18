@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using WellnessJournal.API.Data;
 using WellnessJournal.API.Models;
@@ -10,9 +11,11 @@ namespace WellnessJournal.API.Controllers;
 /// <summary>
 /// Contrôleur d'authentification : inscription et connexion.
 /// Les mots de passe sont hachés avec BCrypt avant stockage.
+/// Protégé par une politique de Rate Limiting anti-bruteforce et anti-DoS.
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
+[EnableRateLimiting("AuthPolicy")]
 public class AuthController : ControllerBase
 {
     private readonly AppDbContext _context;
