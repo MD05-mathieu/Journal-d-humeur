@@ -44,8 +44,12 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
       return;
     }
 
-    if (password.length < 8) {
-      Alert.alert('Mot de passe trop court', 'Pour votre sécurité, le mot de passe doit comporter au moins 8 caractères.');
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+    if (!passwordRegex.test(password)) {
+      Alert.alert(
+        'Mot de passe insuffisant',
+        'Le mot de passe doit comporter au moins 8 caractères, dont une majuscule, une minuscule et un chiffre.'
+      );
       return;
     }
 

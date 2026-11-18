@@ -1,9 +1,12 @@
 /**
  * WeeklyChart — Composant graphique SVG pour le suivi d'humeur sur 7 jours.
- * Utilise 'react-native-svg' pour dessiner une courbe douce avec remplissage en gradient.
+ * - Rendu responsive adapté à toutes les largeurs d'écran (useWindowDimensions)
+ * - Traitement timezone-safe des dates
+ * - Couleurs et contrastes conformes WCAG AA
+ * - Gradient d'ambiance et tracé vectoriel
  */
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
 import Svg, {
   Line,
   Circle,
@@ -15,6 +18,8 @@ import Svg, {
   G,
 } from 'react-native-svg';
 import { MoodEntryResponse } from '../types';
+import { Colors, Spacing, BorderRadius } from '../theme';
+import { getLocalDateString } from '../utils/date';
 
 interface WeeklyChartProps {
   entries: MoodEntryResponse[];
@@ -26,20 +31,22 @@ interface WeeklyChartProps {
 const FRENCH_DAYS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
 
 const getScoreColor = (score: number): string => {
-  if (score >= 4.2) return '#6C63FF';
-  if (score >= 3.5) return '#06D6A0';
-  if (score >= 2.5) return '#FFD166';
-  if (score >= 1.8) return '#FFA07A';
-  return '#FF6584';
+  if (score >= 4.2) return Colors.moods[5];
+  if (score >= 3.5) return Colors.moods[4];
+  if (score >= 2.5) return Colors.moods[3]; // Accessible ambre (> 4.5:1)
+  if (score >= 1.8) return Colors.moods[2];
+  return Colors.moods[1];
 };
 
 const WeeklyChart: React.FC<WeeklyChartProps> = ({
   entries,
   periodStart,
-  periodEnd,
   averageScore,
 }) => {
-  const CHART_WIDTH = 320;
+  const { width } = useWindowDimensions();
+
+  // Largeur dynamique calculée selon l'écran (avec padding de conteneur de 20 de chaque côté + padding carte 18*2)
+  const CHART_WIDTH = Math.max(280, Math.min(width - 76, 500));
   const CHART_HEIGHT = 180;
   const PADDING_LEFT = 35;
   const PADDING_RIGHT = 20;
@@ -49,17 +56,21 @@ const WeeklyChart: React.FC<WeeklyChartProps> = ({
   const PLOT_WIDTH = CHART_WIDTH - PADDING_LEFT - PADDING_RIGHT;
   const PLOT_HEIGHT = CHART_HEIGHT - PADDING_TOP - PADDING_BOTTOM;
 
-  // Construction des 7 jours de la période
+  // Construction des 7 jours de la période en date locale
   const days: { dateStr: string; label: string; score: number | null }[] = [];
   const start = new Date(periodStart);
 
   for (let i = 0; i < 7; i++) {
     const current = new Date(start);
     current.setDate(start.getDate() + i);
-    const dateStr = current.toISOString().split('T')[0];
+    const dateStr = getLocalDateString(current);
     const dayLabel = FRENCH_DAYS[current.getDay()];
 
-    const match = entries.find((e) => e.entryDateUtc.split('T')[0] === dateStr);
+    const match = entries.find((e) => {
+      const entryLocalDate = getLocalDateString(new Date(e.entryDateUtc));
+      return entryLocalDate === dateStr;
+    });
+
     days.push({
       dateStr,
       label: dayLabel,
@@ -71,7 +82,7 @@ const WeeklyChart: React.FC<WeeklyChartProps> = ({
   const coords = days.map((day, idx) => {
     const x = PADDING_LEFT + (idx / 6) * PLOT_WIDTH;
     if (day.score !== null) {
-      // Score 1 en bas (y = PADDING_TOP + PLOT_HEIGHT), Score 5 en haut (y = PADDING_TOP)
+      // Score 1 en bas, Score 5 en haut
       const y = PADDING_TOP + PLOT_HEIGHT - ((day.score - 1) / 4) * PLOT_HEIGHT;
       return { x, y, score: day.score, hasData: true, label: day.label };
     }
@@ -87,7 +98,7 @@ const WeeklyChart: React.FC<WeeklyChartProps> = ({
   const validPoints = coords.filter((c) => c.hasData);
   const polylineStr = validPoints.map((p) => `${p.x},${p.y}`).join(' ');
 
-  // Polygone fermé pour le dégradé de fond
+  // Surface en dégradé sous la courbe
   const areaPolylineStr =
     validPoints.length >= 2
       ? `${validPoints[0].x},${PADDING_TOP + PLOT_HEIGHT} ${polylineStr} ${
@@ -98,7 +109,11 @@ const WeeklyChart: React.FC<WeeklyChartProps> = ({
   const themeColor = getScoreColor(averageScore);
 
   return (
-    <View style={styles.card}>
+    <View
+      style={styles.card}
+      accessibilityRole="summary"
+      accessibilityLabel={`Graphique hebdomadaire de suivi de l'humeur. Score moyen de ${averageScore.toFixed(1)} sur 5`}
+    >
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>Évolution sur 7 Jours</Text>
@@ -115,8 +130,8 @@ const WeeklyChart: React.FC<WeeklyChartProps> = ({
         <Svg width={CHART_WIDTH} height={CHART_HEIGHT} viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}>
           <Defs>
             <LinearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0" stopColor="#6C63FF" stopOpacity="0.35" />
-              <Stop offset="1" stopColor="#6C63FF" stopOpacity="0.02" />
+              <Stop offset="0" stopColor={Colors.primary} stopOpacity="0.35" />
+              <Stop offset="1" stopColor={Colors.primary} stopOpacity="0.02" />
             </LinearGradient>
           </Defs>
 
@@ -138,7 +153,7 @@ const WeeklyChart: React.FC<WeeklyChartProps> = ({
                   x={PADDING_LEFT - 10}
                   y={y + 4}
                   fontSize={11}
-                  fill="#9DA0B8"
+                  fill={Colors.textSecondary}
                   textAnchor="end"
                   fontWeight="600"
                 >
@@ -158,7 +173,7 @@ const WeeklyChart: React.FC<WeeklyChartProps> = ({
             <Polyline
               points={polylineStr}
               fill="none"
-              stroke="#6C63FF"
+              stroke={Colors.primary}
               strokeWidth={3}
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -173,7 +188,7 @@ const WeeklyChart: React.FC<WeeklyChartProps> = ({
                 x={item.x}
                 y={CHART_HEIGHT - 10}
                 fontSize={11}
-                fill={item.hasData ? '#2B2B43' : '#B8B9C9'}
+                fill={item.hasData ? Colors.textPrimary : Colors.textMuted}
                 textAnchor="middle"
                 fontWeight={item.hasData ? '700' : '500'}
               >
@@ -183,8 +198,15 @@ const WeeklyChart: React.FC<WeeklyChartProps> = ({
               {/* Point de tracé */}
               {item.hasData ? (
                 <>
-                  <Circle cx={item.x} cy={item.y} r={6} fill="#FFFFFF" stroke="#6C63FF" strokeWidth={2.5} />
-                  <Circle cx={item.x} cy={item.y} r={3} fill="#6C63FF" />
+                  <Circle
+                    cx={item.x}
+                    cy={item.y}
+                    r={6}
+                    fill={Colors.surface}
+                    stroke={Colors.primary}
+                    strokeWidth={2.5}
+                  />
+                  <Circle cx={item.x} cy={item.y} r={3} fill={Colors.primary} />
                 </>
               ) : (
                 <Circle
@@ -207,11 +229,11 @@ const WeeklyChart: React.FC<WeeklyChartProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 18,
-    marginBottom: 20,
-    shadowColor: '#4A3AFF',
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.lg,
+    marginBottom: Spacing.lg,
+    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.06,
     shadowRadius: 16,
@@ -221,22 +243,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: Spacing.md,
   },
   title: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#2B2B43',
+    color: Colors.textPrimary,
   },
   subtitle: {
     fontSize: 12,
-    color: '#71718A',
+    color: Colors.textSecondary,
     marginTop: 2,
   },
   badge: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 14,
+    borderRadius: BorderRadius.md,
   },
   badgeText: {
     fontSize: 13,
@@ -244,7 +266,7 @@ const styles = StyleSheet.create({
   },
   svgWrapper: {
     alignItems: 'center',
-    marginTop: 4,
+    marginTop: Spacing.xs,
   },
 });
 

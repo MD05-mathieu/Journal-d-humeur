@@ -19,6 +19,8 @@ import { useFocusEffect } from '@react-navigation/native';
 import apiClient from '../api/axios';
 import WeeklyChart from '../components/WeeklyChart';
 import { WeeklySummaryResponse } from '../types';
+import { Colors, Spacing, BorderRadius } from '../theme';
+import { formatDisplayDate } from '../utils/date';
 
 const MOOD_EMOJIS_BY_SCORE: Record<number, string> = {
   1: '😞',
@@ -171,15 +173,15 @@ const StatsScreen: React.FC = () => {
           .slice()
           .reverse()
           .map((entry) => {
-            const dateObj = new Date(entry.entryDateUtc);
-            const formattedDate = dateObj.toLocaleDateString('fr-FR', {
-              weekday: 'long',
-              day: 'numeric',
-              month: 'short',
-            });
+            const formattedDate = formatDisplayDate(entry.entryDateUtc);
 
             return (
-              <View key={entry.id} style={styles.historyItem}>
+              <View
+                key={entry.id}
+                style={styles.historyItem}
+                accessibilityRole="text"
+                accessibilityLabel={`Entrée du ${formattedDate}, note ${entry.score} sur 5`}
+              >
                 <Text style={styles.historyEmoji}>
                   {MOOD_EMOJIS_BY_SCORE[entry.score] || '😐'}
                 </Text>
