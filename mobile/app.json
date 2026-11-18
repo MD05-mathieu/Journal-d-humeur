@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "Journal de Bien-Être",
+    "slug": "wellness-journal",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#6C63FF"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.wellnessjournal.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#6C63FF"
+      },
+      "package": "com.wellnessjournal.app"
+    }
+  }
+}
