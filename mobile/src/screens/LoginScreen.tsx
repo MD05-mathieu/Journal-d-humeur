@@ -45,9 +45,19 @@ const LoginScreen: React.FC<Props> = ({ navigation }) => {
       });
       // La mise à jour de l'état d'authentification réoriente automatiquement l'utilisateur
     } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.message ||
-        'Impossible de se connecter. Vérifiez vos identifiants ou l\'état du serveur.';
+      let errorMessage = 'Impossible de se connecter. Vérifiez vos identifiants ou l\'état du serveur.';
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.errors) {
+        const errorList = Object.values(error.response.data.errors).flat();
+        if (errorList.length > 0) {
+          errorMessage = errorList.join('\n');
+        }
+      } else if (error.response?.data?.title) {
+        errorMessage = error.response.data.title;
+      } else if (error.message === 'Network Error' || !error.response) {
+        errorMessage = 'Impossible de joindre le serveur. Vérifiez votre connexion et l\'adresse IP de l\'API.';
+      }
       Alert.alert('Erreur d\'authentification', errorMessage);
     } finally {
       setIsSubmitting(false);

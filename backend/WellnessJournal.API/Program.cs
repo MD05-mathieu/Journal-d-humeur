@@ -56,16 +56,31 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (context, token) =>
+    {
+        context.HttpContext.Response.ContentType = "application/json";
+        await context.HttpContext.Response.WriteAsync(
+            "{\"message\":\"Trop de requêtes d'authentification. Veuillez patienter une minute avant de réessayer.\"}",
+            cancellationToken: token);
+    };
     options.AddPolicy("AuthPolicy", httpContext =>
-        RateLimitPartition.GetFixedWindowLimiter(
+    {
+        // Ne pas bloquer les requêtes prévol CORS (OPTIONS)
+        if (httpContext.Request.Method == HttpMethods.Options)
+        {
+            return RateLimitPartition.GetNoLimiter("OptionsPreflight");
+        }
+
+        return RateLimitPartition.GetFixedWindowLimiter(
             partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
             factory: _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = 5,
+                PermitLimit = 15,
                 Window = TimeSpan.FromMinutes(1),
                 QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                 QueueLimit = 0
-            }));
+            });
+    });
 });
 
 builder.Services.AddAuthorization();

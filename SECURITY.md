@@ -97,7 +97,7 @@ L'intercepteur Axios dans `src/api/axios.ts` assure :
 * Validation stricte des modèles via `[Required]`, `[EmailAddress]`, `[MinLength(8)]`, `[RegularExpression]` (mot de passe robuste), `[Range(1, 5)]`, et `[MaxLength]`.
 * **Protection anti-débordement sur les tags d'émotions :** Implémentation de `IValidatableObject` sur `MoodEntryRequest` plafonnant le nombre de tags à 10 maximum, chaque tag étant limité à 30 caractères.
 * **Bornage temporel :** Contrôle des dates pour empêcher les dates futures ou obsolètes (> 1 an).
-* **Limitation de débit (Rate Limiting) :** Middleware natif .NET 8 `Microsoft.AspNetCore.RateLimiting` configuré sur `/api/auth/*` (politique `AuthPolicy` : 5 requêtes max par minute par IP) neutralisant les attaques par force brute et la saturation CPU de BCrypt.
+* **Limitation de débit (Rate Limiting) :** Middleware natif .NET 8 `Microsoft.AspNetCore.RateLimiting` configuré sur `/api/auth/*` (politique `AuthPolicy` : 15 requêtes max par minute par IP, exclusion des requêtes de prévol CORS OPTIONS, réponse JSON explicite avec code 429) neutralisant les attaques par force brute et la saturation CPU de BCrypt sans bloquer les prévols du client mobile/web.
 * **En-têtes de sécurité HTTP :** Injection de `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `X-XSS-Protection`, et `Referrer-Policy`.
 
 ### Côté Mobile

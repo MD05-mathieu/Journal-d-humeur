@@ -67,9 +67,19 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
       });
       // Le state change dans AuthContext et déclenche la navigation vers l'espace connecté
     } catch (error: any) {
-      const errorMessage =
-        error.response?.data?.message ||
-        'Impossible de finaliser l\'inscription. Veuillez réessayer ultérieurement.';
+      let errorMessage = 'Impossible de finaliser l\'inscription. Veuillez réessayer ultérieurement.';
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.errors) {
+        const errorList = Object.values(error.response.data.errors).flat();
+        if (errorList.length > 0) {
+          errorMessage = errorList.join('\n');
+        }
+      } else if (error.response?.data?.title) {
+        errorMessage = error.response.data.title;
+      } else if (error.message === 'Network Error' || !error.response) {
+        errorMessage = 'Impossible de joindre le serveur. Vérifiez votre connexion et l\'adresse IP de l\'API.';
+      }
       Alert.alert('Erreur d\'inscription', errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -111,7 +121,7 @@ const RegisterScreen: React.FC<Props> = ({ navigation }) => {
             onChangeText={setEmail}
           />
 
-          <Text style={styles.label}>Mot de passe (8 car. min)</Text>
+          <Text style={styles.label}>Mot de passe (8 car. min, Maj, Min, Chiffre)</Text>
           <TextInput
             style={styles.input}
             placeholder="••••••••"
