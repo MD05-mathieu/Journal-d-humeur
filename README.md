@@ -148,38 +148,21 @@ Avant de commencer, assurez-vous d'avoir installé sur votre machine :
 
 ---
 
-### Étape B : Configuration du Réseau & IP Locale (Crucial pour Expo Mobile)
+### Étape B : Configuration du Réseau & Détection Automatique d'IP
 
-Lorsque vous testez une application mobile via un smartphone physique ou un émulateur, `localhost` désigne le smartphone lui-même et non votre ordinateur ! Il faut donc configurer l'adresse IP locale de votre machine de développement.
+> ⚡ **Nouveauté : Détection Automatique avec Expo Go !**
+> L'application mobile intègre désormais la détection automatique de l'IP de votre machine hôte en mode développement (`expo-constants`). Vous n'avez plus besoin de modifier l'adresse IP à chaque changement de réseau Wi-Fi !
 
-#### 1. Trouver votre adresse IP locale
-Ouvrez une invite de commande PowerShell ou CMD :
-```cmd
-ipconfig
-```
-Repérez la section correspondant à votre connexion active (Wi-Fi ou Carte Ethernet) :
-```text
-Carte réseau sans fil Wi-Fi:
-   Adresse IPv4. . . . . . . . . . . . . .: 192.168.1.45  <-- C'est cette adresse !
-```
-
-> 📶 **Astuce Point d'Accès Mobile (Partage de connexion) :**
-> Si vous êtes sur un réseau public ou d'entreprise avec isolation client (AP Isolation), connectez votre PC et votre smartphone au même point d'accès Wi-Fi créé par votre smartphone. Récupérez ensuite l'IP avec `ipconfig`.
-
-#### 2. Configurer le fichier `.env` du projet mobile
-1. Allez dans le dossier `mobile/` :
+Si vous utilisez un émulateur ou si vous souhaitez forcer une URL personnalisée (tunnel, IP fixe) :
+1. Créez votre fichier `.env` à partir de `.env.example` :
    ```bash
    cd D:\perso\MonApp\mobile
-   ```
-2. Créez votre fichier `.env` à partir de `.env.example` :
-   ```bash
    copy .env.example .env
    ```
-3. Modifiez `.env` pour renseigner l'IP découverte :
+2. Renseignez l'URL souhaitée dans `mobile/.env` :
    ```env
-   API_URL=http://192.168.1.45:5000/api
+   API_URL=http://<VOTRE_IP_LOCALE>:5000/api
    ```
-   *(Si vous utilisez l'émulateur officiel Android Studio, vous pouvez utiliser `http://10.0.2.2:5000/api`)*.
 
 ---
 

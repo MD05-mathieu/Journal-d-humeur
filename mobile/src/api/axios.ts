@@ -5,14 +5,45 @@
  */
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 import { API_URL } from '@env';
 
 export const TOKEN_KEY = 'wellness_jwt_token';
 export const USERNAME_KEY = 'wellness_username';
 
+/**
+ * Détermination dynamique de l'URL de base du backend API :
+ * 1. En développement avec Expo Go (__DEV__) : détection automatique de l'IP
+ *    de l'ordinateur via Constants.expoConfig?.hostUri (aucune modification de .env nécessaire).
+ * 2. Si non disponible, utilise la variable API_URL du fichier .env.
+ * 3. Fallback selon la plateforme (10.0.2.2 sur émulateur Android, localhost ailleurs).
+ */
+const getBackendBaseUrl = (): string => {
+  if (__DEV__) {
+    const hostUri = Constants.expoConfig?.hostUri || (Constants as any).manifest?.debuggerHost;
+    if (hostUri) {
+      const ip = hostUri.split(':')[0];
+      if (ip) {
+        return `http://${ip}:5000/api`;
+      }
+    }
+  }
+
+  if (API_URL && !API_URL.includes('<') && !API_URL.includes('VOTRE_ADRESSE_IP')) {
+    return API_URL;
+  }
+
+  if (Platform.OS === 'android') {
+    return 'http://10.0.2.2:5000/api';
+  }
+
+  return 'http://localhost:5000/api';
+};
+
 // Création de l'instance Axios
 const apiClient = axios.create({
-  baseURL: API_URL || 'http://10.0.2.2:5000/api',
+  baseURL: getBackendBaseUrl(),
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json',

@@ -23,23 +23,17 @@ npm install
 
 ---
 
-## 🌐 2. Configuration de l'URL de l'API dans `.env`
+## 🌐 2. Configuration Réseau & Détection Automatique d'IP
 
-Le smartphone physique ou l'émulateur ne partage pas le `localhost` de votre PC. Vous devez spécifier l'adresse IP de votre ordinateur sur le réseau local.
+L'application intègre désormais la **détection automatique de l'adresse IP** de votre ordinateur via `expo-constants` en mode développement (`__DEV__`). 
+Lorsque vous lancez l'application avec **Expo Go**, l'application extrait automatiquement l'adresse IP de votre machine sans que vous ayez besoin de modifier manuellement le fichier `.env` à chaque changement de réseau Wi-Fi !
 
+Si vous souhaitez forcer une URL spécifique (ex: tunnel Ngrok ou serveur distant) :
 1. **Copiez le fichier d'exemple :**
    ```bash
    copy .env.example .env
    ```
-
-2. **Obtenez votre adresse IPv4 locale :**
-   Dans une invite de commande Windows (PowerShell / CMD) :
-   ```cmd
-   ipconfig
-   ```
-   Notez l'adresse IPv4 de votre adaptateur Wi-Fi actif (ex: `192.168.1.52`).
-
-3. **Éditez le fichier `.env` :**
+2. **Éditez le fichier `.env` :**
    ```env
    API_URL=http://192.168.1.52:5000/api
    ```
